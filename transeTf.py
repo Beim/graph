@@ -25,6 +25,8 @@ class TransE_tf():
         self.max_epoch = config['max_epoch']
         self.threshold = config['threshold']
         self.snapshot_step = config['snapshot_step']
+        self.decay_steps = config['decay_steps']
+        self.decay_rate = config['decay_rate']
         self.next_batch = next_batch
         logger.info('init transe, config: %s' % json.dumps(config))
 
@@ -46,14 +48,16 @@ class TransE_tf():
         corrupted_tail_embedding = tf.nn.embedding_lookup(entity_embedding_table, corrupted_triples[:, 2])
 
         loss = self.calc_loss(head_embedding, relation_embedding, tail_embedding, corrupted_head_embedding, corrupted_tail_embedding)
-        optimizer = tf.train.AdagradOptimizer(self.learning_rate).minimize(loss)
+        global_step = tf.placeholder(dtype=tf.int32)
+        learning_rate = tf.train.exponential_decay(self.learning_rate, global_step, self.decay_steps, self.decay_rate, staircase=True)
+        optimizer = tf.train.AdagradOptimizer(learning_rate).minimize(loss)
 
         init = tf.global_variables_initializer()
         with tf.Session(config=tf.ConfigProto(log_device_placement=False)) as sess:
             sess.run(init)
             for step in range(self.max_epoch):
                 triple_ids, corrupted_triple_ids = self.next_batch(self.batch_size)
-                r, _ = sess.run([loss, optimizer], feed_dict={triples: triple_ids, corrupted_triples: corrupted_triple_ids})
+                r, _ = sess.run([loss, optimizer], feed_dict={triples: triple_ids, corrupted_triples: corrupted_triple_ids, global_step: step})
                 if step % 1000 == 0:
                     print('step %d, loss = %s, %s' % (step, r, time.asctime()))
                     logger.info('step %d, loss = %s' % (step, r))
@@ -103,6 +107,8 @@ def run(triples, entities, relations, triple_idc):
         'max_epoch': int(cfg.get('transe', 'max_epoch')),
         'threshold': float(cfg.get('transe', 'threshold')),
         'snapshot_step': int(cfg.get('transe', 'snapshot_step')),
+        'decay_steps': int(cfg.get('transe', 'decay_steps')),
+        'decay_rate': float(cfg.get('transe', 'decay_rate')),
         'entity_size': len(entities),
         'relation_size': len(relations)
     }
