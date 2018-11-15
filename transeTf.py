@@ -24,6 +24,7 @@ class TransE_tf():
         self.margin = config['margin']
         self.max_epoch = config['max_epoch']
         self.threshold = config['threshold']
+        self.snapshot_step = config['snapshot_step']
         self.next_batch = next_batch
         logger.info('init transe, config: %s' % json.dumps(config))
 
@@ -53,18 +54,18 @@ class TransE_tf():
             for step in range(self.max_epoch):
                 triple_ids, corrupted_triple_ids = self.next_batch(self.batch_size)
                 r, _ = sess.run([loss, optimizer], feed_dict={triples: triple_ids, corrupted_triples: corrupted_triple_ids})
-                if step % 1000 == 0:
-                    self.snapshot(entity_embedding_table, relation_embedding_table)
+                if step % self.snapshot_step == 0:
+                    self.snapshot(step, entity_embedding_table, relation_embedding_table)
                     print('step %d, loss = %s, %s' % (step, r, time.asctime()))
                     logger.info('step %d, loss = %s' % (step, r))
                 if (r < self.threshold and r != 0):
                     print('step %d, loss = %s' % (step, r))
                     logger.info('step %d, loss = %s' % (step, r))
-                    self.snapshot(entity_embedding_table, relation_embedding_table)
+                    self.snapshot(step, entity_embedding_table, relation_embedding_table)
                     break
-    def snapshot(self, entity_embedding_table, relation_embedding_table):
-        np.savetxt('%s/snapshot/entity_embedding_table.txt' % currdir, entity_embedding_table.eval())
-        np.savetxt('%s/snapshot/relation_embedding_table.txt' % currdir, relation_embedding_table.eval())
+    def snapshot(self, step, entity_embedding_table, relation_embedding_table):
+        np.savetxt('%s/snapshot/entity_embedding_table_%s.txt' % (currdir, str(step)), entity_embedding_table.eval())
+        np.savetxt('%s/snapshot/relation_embedding_table_%s.txt' % (currdir, str(step)), relation_embedding_table.eval())
 
     def calc_loss(self, h, l, t, h_c, t_c):
         return tf.reduce_sum(
@@ -100,6 +101,7 @@ def run(triples, entities, relations, triple_idc):
         'margin': float(cfg.get('transe', 'margin')),
         'max_epoch': int(cfg.get('transe', 'max_epoch')),
         'threshold': float(cfg.get('transe', 'threshold')),
+        'snapshot_step': int(cfg.get('transe', 'snapshot_step')),
         'entity_size': len(entities),
         'relation_size': len(relations)
     }
