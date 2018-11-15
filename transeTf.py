@@ -54,10 +54,11 @@ class TransE_tf():
             for step in range(self.max_epoch):
                 triple_ids, corrupted_triple_ids = self.next_batch(self.batch_size)
                 r, _ = sess.run([loss, optimizer], feed_dict={triples: triple_ids, corrupted_triples: corrupted_triple_ids})
-                if step % self.snapshot_step == 0:
-                    self.snapshot(step, entity_embedding_table, relation_embedding_table)
+                if step % 1000 == 0:
                     print('step %d, loss = %s, %s' % (step, r, time.asctime()))
                     logger.info('step %d, loss = %s' % (step, r))
+                if step % self.snapshot_step == 0:
+                    self.snapshot(step, entity_embedding_table, relation_embedding_table)
                 if (r < self.threshold and r != 0):
                     print('step %d, loss = %s' % (step, r))
                     logger.info('step %d, loss = %s' % (step, r))
