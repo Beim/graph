@@ -52,12 +52,15 @@ class TransE_tf():
         learning_rate = tf.train.exponential_decay(self.learning_rate, global_step, self.decay_steps, self.decay_rate, staircase=True)
         optimizer = tf.train.AdagradOptimizer(learning_rate).minimize(loss)
 
+        new_entity_embedding_table = entity_embedding_table / tf.norm(entity_embedding_table, axis=1, keepdims=True)
+        update_entity_embedding_table = tf.assign(entity_embedding_table, new_entity_embedding_table)
+
         init = tf.global_variables_initializer()
         with tf.Session(config=tf.ConfigProto(log_device_placement=False)) as sess:
             sess.run(init)
             for step in range(self.max_epoch):
                 triple_ids, corrupted_triple_ids = self.next_batch(self.batch_size)
-                entity_embedding_table = entity_embedding_table / tf.norm(entity_embedding_table, axis=1, keepdims=True)
+                sess.run(update_entity_embedding_table)
                 r, _ = sess.run([loss, optimizer], feed_dict={triples: triple_ids, corrupted_triples: corrupted_triple_ids, global_step: step})
                 if step % 1000 == 0:
                     print('step %d, loss = %s, %s' % (step, r, time.asctime()))
