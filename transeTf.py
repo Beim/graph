@@ -57,6 +57,7 @@ class TransE_tf():
             sess.run(init)
             for step in range(self.max_epoch):
                 triple_ids, corrupted_triple_ids = self.next_batch(self.batch_size)
+                entity_embedding_table = entity_embedding_table / tf.norm(entity_embedding_table, axis=1, keepdims=True)
                 r, _ = sess.run([loss, optimizer], feed_dict={triples: triple_ids, corrupted_triples: corrupted_triple_ids, global_step: step})
                 if step % 1000 == 0:
                     print('step %d, loss = %s, %s' % (step, r, time.asctime()))
