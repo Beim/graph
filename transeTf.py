@@ -73,6 +73,7 @@ class TransE_tf():
                 triple_ids, corrupted_triple_ids = self.next_batch(self.batch_size)
                 sess.run(update_entity_embedding_table)
                 r, _, summary = sess.run([loss, optimizer, merge], feed_dict={triples: triple_ids, corrupted_triples: corrupted_triple_ids, global_step: step})
+                r = r / self.batch_size
                 if step % 50 == 0:
                     summary_writer.add_summary(summary, step)
                 if step % 1000 == 0:
@@ -80,7 +81,7 @@ class TransE_tf():
                     logger.info('step %d, loss = %s' % (step, r))
                 if step % self.snapshot_step == 0:
                     self.snapshot(step, entity_embedding_table, relation_embedding_table)
-                if (r/self.batch_size < self.threshold and r != 0):
+                if (r < self.threshold and r != 0):
                     print('step %d, loss = %s' % (step, r))
                     logger.info('step %d, loss = %s' % (step, r))
                     self.snapshot(step, entity_embedding_table, relation_embedding_table)
