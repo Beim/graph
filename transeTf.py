@@ -36,7 +36,7 @@ class TransE_tf():
         # entity_embedding_table = entity_embedding_table / tf.norm(entity_embedding_table, axis=1, keepdims=True)
         relation_embedding_table = tf.Variable(
             tf.truncated_normal([self.relation_size, self.dim], stddev=6.0 / math.sqrt(self.dim)))
-        relation_embedding_table = relation_embedding_table / tf.norm(relation_embedding_table, axis=1, keepdims=True)
+        # relation_embedding_table = relation_embedding_table / tf.norm(relation_embedding_table, axis=1, keepdims=True)
 
         triples = tf.placeholder(tf.int32, shape=[self.batch_size, 3])
         corrupted_triples = tf.placeholder(tf.int32, shape=[self.batch_size, 3])
@@ -54,10 +54,13 @@ class TransE_tf():
 
         new_entity_embedding_table = entity_embedding_table / tf.norm(entity_embedding_table, axis=1, keepdims=True)
         update_entity_embedding_table = tf.assign(entity_embedding_table, new_entity_embedding_table)
+        new_relation_embedding_table = relation_embedding_table / tf.norm(relation_embedding_table, axis=1, keepdims=True)
+        update_relation_embedding_table = tf.assign(relation_embedding_table, new_relation_embedding_table)
 
         init = tf.global_variables_initializer()
         with tf.Session(config=tf.ConfigProto(log_device_placement=False)) as sess:
             sess.run(init)
+            sess.run(update_relation_embedding_table)
             for step in range(self.max_epoch):
                 triple_ids, corrupted_triple_ids = self.next_batch(self.batch_size)
                 sess.run(update_entity_embedding_table)
