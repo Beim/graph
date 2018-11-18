@@ -93,7 +93,7 @@ class TransE_tf():
     def calc_loss(self, h, l, t, h_c, t_c):
         return tf.reduce_sum(
             tf.nn.relu(self.margin + self.L2_norm(h, l, t) - self.L2_norm(h_c, l, t_c))
-        )
+        ) / self.batch_size
 
     def L2_norm(self, h, l, t):
         return tf.norm(h+l-t, axis=1)
