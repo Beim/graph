@@ -33,11 +33,11 @@ class TransE_tf():
     def train(self):
         with tf.name_scope("embedding"):
             entity_embedding_table = tf.Variable(
-                tf.truncated_normal([self.entity_size, self.dim], stddev=6.0 / math.sqrt(self.dim)))
-            # entity_embedding_table = entity_embedding_table / tf.norm(entity_embedding_table, axis=1, keepdims=True)
+                # tf.truncated_normal([self.entity_size, self.dim], stddev=1.0),
+                tf.truncated_normal([self.entity_size, self.dim], stddev=1.0))
             relation_embedding_table = tf.Variable(
-                tf.truncated_normal([self.relation_size, self.dim], stddev=6.0 / math.sqrt(self.dim)))
-            # relation_embedding_table = relation_embedding_table / tf.norm(relation_embedding_table, axis=1, keepdims=True)
+                # tf.truncated_normal([self.relation_size, self.dim], stddev=6.0 / math.sqrt(self.dim)))
+                tf.truncated_normal([self.relation_size, self.dim], stddev=1.0))
 
             triples = tf.placeholder(tf.int32, shape=[self.batch_size, 3], name="triples")
             corrupted_triples = tf.placeholder(tf.int32, shape=[self.batch_size, 3], name="corrupted_triples")
