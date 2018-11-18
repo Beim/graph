@@ -33,11 +33,11 @@ class TransE_tf():
     def train(self):
         with tf.name_scope("embedding"):
             entity_embedding_table = tf.Variable(
-                # tf.truncated_normal([self.entity_size, self.dim], stddev=1.0),
-                tf.truncated_normal([self.entity_size, self.dim], stddev=1.0))
+                tf.truncated_normal([self.entity_size, self.dim], stddev=6.0 / math.sqrt(self.dim)))
+                # tf.truncated_normal([self.entity_size, self.dim], stddev=1.0))
             relation_embedding_table = tf.Variable(
-                # tf.truncated_normal([self.relation_size, self.dim], stddev=6.0 / math.sqrt(self.dim)))
-                tf.truncated_normal([self.relation_size, self.dim], stddev=1.0))
+                tf.truncated_normal([self.relation_size, self.dim], stddev=6.0 / math.sqrt(self.dim)))
+                # tf.truncated_normal([self.relation_size, self.dim], stddev=1.0))
 
             triples = tf.placeholder(tf.int32, shape=[self.batch_size, 3], name="triples")
             corrupted_triples = tf.placeholder(tf.int32, shape=[self.batch_size, 3], name="corrupted_triples")
@@ -80,7 +80,7 @@ class TransE_tf():
                     logger.info('step %d, loss = %s' % (step, r))
                 if step % self.snapshot_step == 0:
                     self.snapshot(step, entity_embedding_table, relation_embedding_table)
-                if (r < self.threshold and r != 0):
+                if (r/self.batch_size < self.threshold and r != 0):
                     print('step %d, loss = %s' % (step, r))
                     logger.info('step %d, loss = %s' % (step, r))
                     self.snapshot(step, entity_embedding_table, relation_embedding_table)
@@ -93,7 +93,7 @@ class TransE_tf():
     def calc_loss(self, h, l, t, h_c, t_c):
         return tf.reduce_sum(
             tf.nn.relu(self.margin + self.L2_norm(h, l, t) - self.L2_norm(h_c, l, t_c))
-        ) / self.batch_size
+        )
 
     def L2_norm(self, h, l, t):
         return tf.norm(h+l-t, axis=1)
